@@ -1,4 +1,4 @@
-# Identification, ontogenetic and tissue expression profile of Toll-like receptors (TLR) in the Iberian ribbed newt (Pleurodeles waltl)*
+# Identification, ontogenetic and tissue expression profile of Toll-like receptors (TLR) in the Iberian ribbed newt (Pleurodeles waltl)
 
 **Author:** Krystian Budzik  
 **Thesis supervisor:** Wiesław Babik  

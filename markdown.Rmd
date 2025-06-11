@@ -1,0 +1,51 @@
+# E-value = 0 sorting
+
+```{r}
+anot1 <- subset(tlr_1, V11 == 0.0)
+```
+
+Only records with e-value equal to 0 were selected by subseting the V11 column.
+
+# Highest subject bitscore
+
+```{r}
+library(dplyr)
+
+anot2 <- anot1 %>%
+  group_by(V2) %>%
+  slice_max(order_by = V12, n = 1, with_ties = FALSE) %>%
+  ungroup()
+```
+
+For the each individual subject the highest bitscore was selected:
+
+# anot4_1
+
+Cleaning from irrelevant naming:
+
+```{r}
+anot4_1$gene_id <- gsub("GeneID:", "", anot4_1$gene_id)
+anot4_1$subject <- gsub("GenBank:", "", anot4_1$subject)
+```
+
+**Adding quary name (TLR) as a column:**
+
+```{r}
+anot2_1 <- anot2 %>% select(name, prot_id)
+anot5 <- anot4_1 %>%
+  left_join(anot2_1, by = "prot_id")
+```
+
+```{r}
+library(knitr)
+kable(anot5)
+```
+
+**And additionaly with the bitscore:**
+
+```{r}
+anot2_1_1 <- anot2 %>% select(name, prot_id, bit_score)
+anot5_bitscore <- anot4_1 %>%
+  left_join(anot2_1_1, by = "prot_id")
+
+```

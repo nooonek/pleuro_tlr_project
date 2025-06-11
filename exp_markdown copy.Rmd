@@ -1,0 +1,583 @@
+---
+title: "Exp"
+author: "Krystian Budzik"
+date: "2025-05-13"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Cleaning
+
+# Naming
+
+```{r}
+library(dplyr)
+
+tlr_counts_fc_data <- rename(tlr_counts_fc_data, gene_id = Geneid)
+tlr_counts_fc_data$gene_id <- gsub("LOC", "", tlr_counts_fc_data$gene_id)
+```
+
+# Gene code (gene_id) instead of name
+
+```{r}
+library(dplyr)
+tlr_counts_fc_data$gene_id <- gsub("TLR2", "138303579", tlr_counts_fc_data$gene_id)
+tlr_counts_fc_data$gene_id <- gsub("TLR3", "138245949", tlr_counts_fc_data$gene_id)
+tlr_counts_fc_data$gene_id <- gsub("TLR5", "138295498", tlr_counts_fc_data$gene_id)
+tlr_counts_fc_data$gene_id <- gsub("TLR8", "138250171", tlr_counts_fc_data$gene_id)
+```
+
+# Joining with the annotation
+
+```{r}
+library(dplyr)
+library(tidyr)
+
+tlr_long <- tlr_counts_fc_names %>%
+  pivot_longer(
+    cols = matches("\\.bam$"), 
+    names_to = "sample",
+    values_to = "counts"
+  )
+
+summary_long <- features_sum %>% slice(c(3)) %>%
+  pivot_longer(
+    cols = matches("\\.bam$"),
+    names_to = "sample",
+    values_to = "features_sum"
+  ) %>% select(sample, features_sum)
+
+tlr_long_total <- tlr_long %>% left_join(summary_long, by = "sample")
+```
+
+# Expression
+
+## FPKM
+
+```{r}
+library(dplyr)
+
+tlr_fpkm_all <- tlr_long_total %>%
+  mutate(
+    length_kb = Length / 1000,
+    rpk = counts / length_kb,
+    fpkm = (rpk / features_sum) * 1e6
+  ) 
+
+tlr_fpkm <- tlr_fpkm_all %>% select(name, gene_id, sample, fpkm)
+
+```
+
+# Preparing an FPKM set to join the full data set
+```{r}
+tlr_fpkm_join <- tlr_fpkm %>% mutate(sample = str_extract(sample, "Pw[^.]+")) %>%
+  select(gene_id, sample, fpkm)
+```
+
+## TPM
+
+```{r}
+tlr_rpk_sum <- tlr_fpkm_all %>%
+  group_by(sample) %>%
+  summarise(total_rpk = sum(rpk, na.rm = TRUE))
+
+tlr_long_total <- tlr_long_total %>%
+  left_join(tlr_rpk_sum, by = "sample")
+```
+
+
+```{r}
+
+
+tlr_tpm_all <- tlr_long_total %>%
+  mutate(
+    length_kb = Length / 1000,
+    rpk = counts / length_kb,
+    scalling_factor = total_rpk.x / 1e6,
+    tpm = (rpk / scalling_factor),
+    tpm_percent = (tpm / 1e4)
+  ) 
+
+tlr_tpm_all <- tlr_tpm_all %>% select(-c(total_rpk.x, total_rpk.y))
+
+tlr_tpm <- tlr_tpm_all %>% select(name, gene_id, length_kb, sample, tpm, tpm_percent)
+```
+
+## Info .bam
+
+```{r}
+library(tidyverse)
+Pw_sample_info <- read_tsv("Pw_sample_info.txt")
+Pw_individual_info <- read_tsv("Pw_individual_info.txt")
+Pw_sample_info_2 <- Pw_sample_info %>% left_join(Pw_individual_info, by = "ID")
+Pw_sample_info_cut <- Pw_sample_info_2 %>% select(sample, part, stage_descr)
+```
+
+# Joining
+```{r}
+tlr_tpm_description <- tlr_tpm %>% mutate(sample = str_extract(sample, "Pw[^.]+")) %>%  
+  
+  left_join(Pw_sample_info_cut, by = "sample")
+
+```
+
+# Renaming TLR01 (138247579) to TLR06
+```{r}
+library(dplyr)
+
+tlr_tpm_description <- tlr_tpm_description  %>%
+  mutate(name = if_else(gene_id == "138247579", "TLR01L", name))
+
+```
+
+# Making a full dataset for visualisation
+```{r}
+library(dplyr)
+
+tlr_tpm_fpkm_dataset <- tlr_tpm_description %>%
+  left_join(tlr_fpkm_join, by = c("sample", "gene_id")) %>%
+
+  # podgrupy – dokładne stadia rozwojowe
+  mutate(dev_subgroup = case_when(
+    stage_descr %in% c("three_fingers", "three_toes") ~ "Young larva",
+    stage_descr %in% c("four_toes", "five_toes", "full_dev") ~ "Older larva",
+    stage_descr %in% c("pre_meta", "mid_meta", "post_meta") ~ "Metamorphosis",
+    stage_descr == "adult" ~ "Adult",
+    TRUE ~ stage_descr
+  )) %>%
+
+  # grupy ogólne
+  mutate(dev_group = case_when(
+    dev_subgroup %in% c("Young larva", "Older larva") ~ "Larva",
+    dev_subgroup == "Metamorphosis" ~ "Metamorphosis",
+    dev_subgroup == "Adult" ~ "Adult",
+    TRUE ~ "other"
+  )) %>%
+
+  # ustawiamy kolejność obu kategorii
+  mutate(
+    dev_subgroup = factor(dev_subgroup, levels = c("Young larva", "Older larva", "Metamorphosis", "Adult")),
+    dev_group = factor(dev_group, levels = c("Larva", "Metamorphosis", "Adult"))
+  )
+  
+```
+
+```{r}
+library(dplyr)
+
+tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(tlr_short0 = gsub("^TLR", "", name)) # usuń "TLR" z początku
+  
+  tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(tlr_short = gsub("0", "", tlr_short0)) %>%
+    select(-c("tlr_short0"))
+  
+  
+```
+
+```{r}
+library(gtools)
+
+# 1. Zrób unikalną listę TLR, posortowaną naturalnie
+tlr_order <- mixedsort(unique(tlr_tpm_fpkm_dataset$tlr_short))
+
+# 2. Przekształć na faktor z tą kolejnością
+tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(tlr_short = factor(tlr_short, levels = tlr_order))
+
+# 3. Sprawdź ponownie
+levels(tlr_tpm_fpkm_dataset$tlr_short)
+```
+
+
+
+# FPKM sum for each dev_group
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# 1. Suma FPKM dla każdej próbki
+sample_fpkm_summary <- tlr_tpm_fpkm_dataset %>%
+  group_by(sample, dev_subgroup) %>%
+  summarise(sample_sum_fpkm = sum(fpkm, na.rm = TRUE), .groups = "drop")
+
+# 2. Średnia (± sd) sumy FPKM w każdej grupie rozwojowej
+subgroup_summary <- sample_fpkm_summary %>%
+  group_by(dev_subgroup) %>%
+  summarise(
+    mean_fpkm = mean(sample_sum_fpkm),
+    sd_fpkm = sd(sample_sum_fpkm),
+    n = n()
+  )
+```
+
+# FPKM sum plot
+```{r}
+library(ggplot2)
+
+group_colors <- c(
+  "Young larva" = "#66c2a5",
+  "Older larva" = "#fc8d62",
+  "Metamorphosis" = "#8da0cb",
+  "Adult" = "#ce4e9b"
+)
+
+ggplot(subgroup_summary, aes(x = dev_subgroup, y = mean_fpkm)) +
+  geom_col(aes(fill = dev_subgroup), width = 0.6) +
+  geom_errorbar(aes(ymin = mean_fpkm - sd_fpkm, ymax = mean_fpkm + sd_fpkm),
+                width = 0.2, color = "black") +
+  scale_fill_manual(values = group_colors) +
+  labs(
+    x = NULL,
+    y = "Mean global expression (FPKM)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "none",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(face = "plain", size = 14, color = "black"),
+    axis.text.y = element_text(face = "plain", size = 14,),
+    axis.title.y = element_text(face = "plain", size = 14, margin = margin(r = 20))
+)
+```
+
+# FPKM sum plot 2
+```{r}
+ggplot(tlr_tpm_fpkm_dataset, aes(x = part, y = fpkm)) +
+  geom_boxplot(aes(color = part), 
+             outlier.shape = 16, outlier.size = 2) +
+  facet_wrap(~ dev_subgroup, nrow = 1, scales = "free_x") +
+  labs(
+    x = "Organ",
+    y = "Gene expression (FPKM)"
+  ) +
+  coord_cartesian(ylim = c(0, 25)) +
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.text = element_text(size = 14, face = "bold"), # Tytuły facetów
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title.x = element_text(margin = margin(r = 30)),
+    axis.title.y = element_text(margin = margin(r = 20) ),
+    panel.grid.major.x = element_blank(),
+    legend.position = "none"
+  )
+```
+# FPKM sum plot 3
+```{r}
+# Ustawienie kolejności stadiów rozwojowych (opcjonalnie)
+
+sample_fpkm_summary$dev_subgroup <- factor(sample_fpkm_summary$dev_subgroup, levels = c("Young larva", "Older larva", "Metamorphosis", "Adult"))
+
+# Kolorki
+group_colors <- c(
+  "Young larva" = "#66c2a5",
+  "Older larva" = "#fc8d62",
+  "Metamorphosis" = "#8da0cb",
+  "Adult" = "#ce4e9b"
+)
+
+# Wykres
+library(ggplot2)
+
+ggplot(sample_fpkm_summary, aes(x = dev_subgroup, y = sample_sum_fpkm, color = dev_subgroup)) +
+  geom_boxplot(outlier.shape = NA, fill = NA, size = 1) + 
+  geom_jitter(width = 0.2, size = 3, alpha = 0.8) + 
+  stat_summary(fun = mean, geom = "point", color = "black", shape = 18, size = 4) +
+  labs(
+    title = NULL,
+    x = NULL,
+    y = "Total FPKM",
+    color = "Stage"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x = element_text(size = 13),
+    axis.title.x = element_text(size = 15, margin = margin(t = 15)),
+    axis.title.y = element_text(size = 15, margin = margin(r = 15)),
+    legend.position = "none"
+    
+  )
+```
+
+
+# TPM plot 1
+```{r}
+library(ggplot2)
+
+dev_colors <- c(
+  "larva" = "#66c2a5",
+  "metamorphosis" = "#fc8d62",
+  "adult" = "#8da0cb"
+)
+
+ggplot(tlr_tpm_fpkm_dataset, aes(x = name, y = tpm_percent)) +
+  geom_boxplot(width = 0.7, fill = "white", color = "black", outlier.size = 0.8) +
+  facet_wrap(~ dev_group, nrow = 1, strip.position = "top") +
+  labs(
+    x = "Gen TLR",
+    y = "Względna ekspresja (%)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.background = element_rect(fill = "white", color = NA),
+    strip.text = element_text(face = "bold", size = 14, color = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.spacing = unit(2, "lines")
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  theme(
+    panel.background = element_rect(fill = "white"),
+    panel.grid.major.x = element_blank()
+  ) +
+  # Nadpisujemy kolory paska nagłówka faceta (hack)
+  facet_wrap(~ dev_group, nrow = 1, strip.position = "top",
+             labeller = labeller(dev_group = function(x) x)) +
+  theme(
+    strip.text.x = element_text(face = "bold", size = 14),
+    strip.background = element_rect(fill = dev_colors[levels(tlr_tpm_fpkm_dataset$dev_group)],
+                                    color = NA)
+  )
+```
+
+# TPM plot 2
+```{r}
+library(ggplot2)
+library(dplyr)
+library(gtools)
+
+# 1. Sortowanie TLR
+tlr_order <- mixedsort(unique(tlr_tpm_fpkm_dataset$tlr_short))
+
+tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(tlr_short = factor(tlr_short, levels = tlr_order))
+
+# 2. Paleta kolorów
+tlr_colors <- c(
+  "#1f9e89",
+  "#e45756",
+  "#5f6caf",
+  "#ce4e9b",
+  "#58b947",
+  "#f29e2e",
+  "#d17f00",
+  "#4a4a4a",
+  "#1ca9c9",
+  "#ff8243",
+  "#5a98d1",
+  "#d078c4",
+  "#91d179",
+  "#ffd02f",
+  "#c5a76a"
+)
+names(tlr_colors) <- levels(tlr_tpm_fpkm_dataset$tlr_short)
+
+# 3. Wykres
+p <- ggplot(tlr_tpm_fpkm_dataset, aes(x = tlr_short, y = tpm_percent, color = tlr_short)) +
+  geom_boxplot(width = 0.6, outlier.size = 0.5) +
+  geom_jitter(aes(color = tlr_short), width = 0, size = 1, alpha = 0.5, show.legend = FALSE) +
+  facet_wrap(~ dev_subgroup, nrow = 1, strip.position = "top") +
+  scale_fill_manual(values = tlr_colors) +
+  scale_color_manual(values = tlr_colors) +
+  coord_cartesian(ylim = c(0, 60)) +
+  scale_x_discrete(expand = expansion(mult = c(0.0001, 0.0001))) +
+  labs(
+    x = "TLR gene",
+    y = "Relative expression percent (TPM)"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    strip.background = element_rect(fill = "gray80", color = NA),
+    strip.text = element_text(face = "plain", size = 14, color = "black"),
+    axis.text.x = element_text(angle = 90, vjust = 0.1, hjust = 0, color = "black", size = 10),
+    axis.text.y = element_text(color = "black"),
+    axis.title = element_text(color = "black"),
+ axis.title.y = element_text(
+  size = 14,
+  color = "black",
+  margin = margin(r = 20)),
+    legend.position = "none",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.spacing = unit(2, "lines")
+  ) 
+```
+
+# TPM Plot 3
+```{r}
+library(ggplot2)
+library(dplyr)
+library(gtools)
+
+tlr_order <- c("1", "1L", "2", "3", "5", "5L", "7", "8", "9A", "9B", "13", "14", "19", "21", "22A")
+
+tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(tlr_short = factor(tlr_short, levels = rev(tlr_order)))
+
+# Ustawienie factor z pełną listą poziomów, nawet jeśli nieobecne w danych
+tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(dev_subgroup_facet = factor(
+    dev_subgroup,
+    levels = c("Young larva", "Adult", "Older larva", "Metamorphosis")
+  ))
+
+# 2. Wykres poziomy z układem 2x2
+p1 <- ggplot(tlr_tpm_fpkm_dataset, aes(x = tpm_percent, y = tlr_short, color = tlr_short)) +
+  geom_boxplot(width = 0.7, outlier.size = 1.5, alpha = 0.4, size = 0.6) +
+  geom_jitter(shape = 21, size = 2.5, height = 0, alpha = 0.5, show.legend = FALSE) +
+  facet_wrap(~ dev_subgroup_facet, ncol = 2, strip.position = "top", drop = FALSE) +
+  #scale_fill_manual(values = tlr_colors) +
+  scale_color_manual(values = tlr_colors) +
+  #scale_x_continuous(limits = c(0, 60), expand = expansion(mult = c(0, 0.05))) +
+  scale_x_continuous(transform = 'sqrt', breaks = c(0, 2, 10, 20, 50)) +
+  labs(
+    x = "Relative expression",
+    y = "TLR gene"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    strip.background = element_rect(fill = "#f5f5f5", color = NA),
+    strip.text = element_text(face = "bold", size = 18, color = "black"),  # <- większe nazwy stage
+    axis.text.x = element_text(color = "black"),
+    axis.text.y = element_text(color = "black", size = 13, vjust = 0, hjust = 0),
+    axis.title = element_text(color = "black"),
+    axis.title.x = element_text(margin = margin(t = 25), size = 18),  # <- większy opis osi
+    axis.title.y = element_text(margin = margin(r = 25), size = 18),  # <- większy opis osi
+    panel.spacing = unit(2, "lines"),
+    legend.position = "none",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+print(p1)
+```
+
+```{r}
+tlr_order <- c("1", "1L", "2", "3", "5", "5L", "7", "8", "9A", "9B", "13", "14", "19", "21", "22A")
+
+tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(tlr_short = factor(tlr_short, levels = rev(tlr_order)))
+
+# Ustawienie factor z pełną listą poziomów, nawet jeśli nieobecne w danych
+tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(dev_subgroup_facet = factor(
+    dev_subgroup,
+    levels = c("Young larva", "Adult", "Older larva", "Metamorphosis")
+  ))
+
+p2 <- ggplot(tlr_tpm_fpkm_dataset, aes(x = tpm_percent, y = tlr_short, fill = tlr_short, color = tlr_short)) +
+  geom_boxplot(width = 0.7, outlier.size = 1.5, alpha = 0.6, size = 0.6) +
+  geom_jitter(shape = 21, size = 2.5, height = 0, alpha = 0.5, show.legend = FALSE) +
+  facet_wrap(~ dev_subgroup_facet, ncol = 2, strip.position = "top", drop = FALSE) +
+  scale_fill_manual(values = tlr_colors) +
+  scale_color_manual(values = tlr_colors) +
+  #scale_x_continuous(limits = c(0, 60), expand = expansion(mult = c(0, 0.05))) +
+  scale_x_continuous(transform = 'sqrt', breaks = c(0, 2, 10, 20, 50)) +
+  labs(
+    x = "Relative expression",
+    y = "TLR gene"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    strip.background = element_rect(fill = "#f5f5f5", color = NA),
+    strip.text = element_text(face = "bold", size = 18, color = "black"),  # <- większe nazwy stage
+    panel.background = element_rect(fill = "#ffffff", color = NA),
+    panel.spacing = unit(2.5, "lines"),
+    axis.text.x = element_text(color = "black", size = 13),
+    axis.text.y = element_text(color = "black", size = 14, hjust = 1),
+    axis.title.x = element_text(margin = margin(t = 25), size = 18),  # <- większy opis osi
+    axis.title.y = element_text(margin = margin(r = 25), size = 18),  # <- większy opis osi
+    legend.position = "none",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+```
+
+# TLR 5L&14
+```{r}
+tlr5l_data <- tlr_tpm_fpkm_dataset %>%
+  filter(tlr_short == "5L")
+
+tlr5l_data$dev_subgroup <- factor(
+  tlr5l_data$dev_subgroup,
+  levels = c("Young larva", "Older larva", "Metamorphosis", "Adult")  
+)
+
+p5L <- ggplot(tlr5l_data, aes(x = dev_subgroup, y = tpm_percent)) +
+  geom_jitter(aes(color = part), size = 3, width = 0.2, alpha = 0.7) +
+
+  # Średnia i linia
+  stat_summary(aes(group = 1), fun = mean, geom = "line", color = "black", size = 0.7) +
+  stat_summary(aes(group = 1), fun = mean, geom = "point", shape = 21, fill = "white", color = "black", size = 4) 
+
+  labs(
+    title = "TLR05L",
+    x = NULL,
+    y = "Expression (TPM)",
+    color = "Organ"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title.x = element_text(size = 16, margin = margin(t = 15)),
+    axis.title.y = element_text(size = 16, margin = margin(r = 15)),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 13)
+  )
+```
+
+```{r}
+tlr14_data <- tlr_tpm_fpkm_dataset %>%
+  filter(tlr_short == "14")
+
+tlr14_data <- tlr_tpm_fpkm_dataset %>%
+  filter(tlr_short == "14") %>%
+  mutate(stage_descr = factor(
+    stage_descr,
+    levels = c("three_fingers", "three_toes", "four_fingers", "four_toes", "five_toes", "full_dev", "pre_meta", "mid_meta", "post_meta", "adult")
+  ))
+
+organ_colors <- c(
+  "head"               = "#E41A1C",  # intensywny czerwony
+  "heart"              = "#377EB8",  # mocny niebieski
+  "intestine"          = "#4DAF4A",  # zieleń trawiasta
+  "liver"              = "#984EA3",  # fioletowy
+  "lungs"              = "#FF7F00",  # ciemnopomarańczowy
+  "middle"             = "#A65628",  # brąz
+  "middle_organs"      = "#F781BF",  # różowy neonowy
+  "middle_skin_spine"  = "#999999",  # szary
+  "organs"             = "#FFFF33",  # żółty (jasny, kontrastowy)
+  "spleen"             = "#00CED1",  # turkus
+  "tail"               = "#1B9E77"   # ciemna zieleń morska
+)
+
+p4 <- ggplot(tlr14_data, aes(x = stage_descr, y = tpm_percent, color = part)) +
+  geom_jitter(size = 3, width = 0.2, alpha = 0.7) +
+  scale_color_manual(values = organ_colors) +
+
+  # Średnia + cienka linia łącząca
+  stat_summary(aes(group = 1), fun = mean, geom = "line", color = "black", size = 0.8) +
+  stat_summary(aes(group = 1), fun = mean, geom = "point", shape = 21, fill = "white", color = "black", size = 4) +
+
+  coord_cartesian(ylim = c(0, 60)) +
+  labs(
+    title = NULL,
+    x = "Subsequent stage",
+    y = "Relative expression",
+    color = "Organ"
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title.x = element_text(size = 16, margin = margin(t = 15)),
+    axis.title.y = element_text(size = 16, margin = margin(r = 15)),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 13)
+  )
+```
+

@@ -43,3 +43,37 @@ blastp \
   -outfmt 6
 ```
 
+
+## BLAST-p output
+
+The following output has been analyzed in terms of relevance. As the output was found satisfactory, and genes indeed were found with relative high bit score and E-value equal to 0, the decision had been made to sort out all the non-zero E-values from the column 11 (V11).
+
+After sorting out E-value, only highest bitscores from each subject (V2) were selected. 
+
+# Picking the E-vaule = 0 only
+
+```{r}
+# anot1 <- subset(tlr_1, V11 == 0.0)
+```
+
+# Highest bit-score sorting
+
+```{r}
+library(dplyr)
+
+#anot2 <- anot1 %>%
+#  group_by(V2) %>%
+#  slice_max(order_by = V12, n = 1, with_ties = FALSE) %>%
+#  ungroup()
+```
+
+The output set was examined to determine if it contains only the highest bitscore for each query (V1) TLR category. In four cased it did not:
+
+1. TLR01
+2. TLR03
+3. TLR9B
+4. TLR14
+
+All aberrations were checked for having higher hits in different queries. After an assessment, the decision needs to be made for each lower bitscore. This process has been described in the *Alignment* markdown.
+
+## Annotation with the .gtf file

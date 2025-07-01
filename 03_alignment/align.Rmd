@@ -1,0 +1,97 @@
+---
+title: "TLR expression analysis in *Pleurodeles waltl*"
+author: "Krystian Budzik"
+
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    css: styles.css
+  pdf_document:
+    toc: true
+    toc_depth: 3
+    keep_tex: true
+---
+
+# Initial remarks
+
+This pipeline was conducted mainly on the server using the bash scripts and on the local machine with MAFFT program. Unlike the other markdowns, this one is rather not reproducible using R.
+
+MAFFT automatically recognizes the type of sequences, in this case - AA sequences!
+
+A part of the GitHib repository: https://github.com/nooonek/pleuro_tlr_project/tree/main
+
+# Preparing the files
+
+The alignment was decided to be conducted only on four TLR sequences, which exhibited some uncertainities:
+
+```
+ TLR01
+ TLR03
+ TLR09B
+ TLR19
+```
+
+To continue, all the *protein_id* subjects' sequences need to be downloaded from the server to a local machine.
+
+## Cuting the wanted sequences of P. waltl and L. vulgaris proteins
+
+To cut only the wanted sequences, the files *GCF_031143425.1_aPleWal1.hap1.20221129_protein.faa* for *P. waltl* and *Lissotriton_TLR_proteins.fas* for *L. vulgaris* were used. The process was automatized by the following algoritm:
+
+```{bash}
+#!/bin/bash
+
+TLR=$1
+echo "Wybrano $TLR"
+grep -w "$TLR" anot5_bitscore.csv > anot5_$TLR.txt
+
+cut -d ',' -f 3 anot5_$TLR.txt > prot_id_$TLR.txt
+
+while read ID; do
+  sed -n "/>$ID/,/^>/p" GCF_031143425.1_aPleWal1.hap1.20221129_protein.faa | sed '$d'
+done < prot_id_$TLR.txt > seq_pleurodeles_$TLR.fasta
+
+sed -n "/>$TLR/,/^>/p" Lissotriton_TLR_proteins.fas | sed '$d' > seq_lissotriton_$TLR.fasta
+
+cat seq_lissotriton_$TLR.fasta seq_pleurodeles_$TLR.fasta > align_$TLR.fasta 
+
+```
+
+1. This script asks for which TLR one wants to get the sequences, and then cuts the sequences from both *Pleurodeles* and *Lissotriton* sets, which were used previously in the annotation, and are available in the **01_annotation** catalogue.
+
+2. Subsequently, the files with both sequence sets are created and merged, making the *align_TLR.fasta* file for the selected TLR
+
+3. This process was done on each of the wanted TLRs (01, 03, 09B, 19), and the corresponding files were downloaded from the server to a local machine, with the MAFFT program installed
+
+# Alignment
+
+The multi-sequence alignment was done on the sets of sequences including both *Pleurodeles* and *Lissotriton* sequences, to compare suspicious sequences of *Pleurodeles* to the reference.
+
+For this task, the MAFFT v7.490 program was used locally.
+
+## MAFFT
+
+The alignment was conducted on every of the generated sequence sets using the following command:
+
+```
+mafft --auto align_$TLR.fasta > TLR$_aligned.fasta
+```
+
+The *--auto* argument was used to run the program on default settings. The used sequences are short, and the alignment is conducted to make a general overview, no more accurate settings were needed.
+
+# Conclusions
+
+Subsequently, the alignment was visually analyzed. The following conclusions were drawn:
+
+```
+TLR01 - Uncertain subjects' sequences were manually annotated as TLR06
+TLR03 - The one outstanding sequence is probably a result of alternative splicing
+TLR09B - Probably a pseudogene or gene duplication occured
+TLR19 - Probably a result of some technical issues, probably with sequencing. Preasumably, the gene was split
+```
+
+# Final remarks
+
+The alignment files are uploaded to the **03_alignment** catalogue in the GitHub repository. For the reproducibility, the files used in this step are deposited in the same catalogue. 

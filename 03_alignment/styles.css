@@ -1,0 +1,16 @@
+/* Większe odstępy między nagłówkami */
+h1, h2, h3 {
+  margin-top: 60px;
+  margin-bottom: 30px;
+}
+
+/* Czcionka dla tekstu */
+body {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Opcjonalnie: zwiększenie odstępu między paragrafami */
+p {
+  margin-bottom: 20px;
+}

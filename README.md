@@ -6,7 +6,7 @@ This repository documents the full annotation and expression analysis of Toll-li
 
 To identify the TLR genes in the *Pleurodeles waltl* genome, and to quantify their expression across developmental stages and bodyparts' tissues using RNA-seq data and TPM/FPKM based estimation.
 
-## 🎯 Hypothesis
+## ❓ Hypothesis
 
 I hypothesise elevated general TLR and particularly fish-type TLRs expression in early, aquatic larval stage in *P. waltl*, showing retained aquatic immune strategy.
 
@@ -54,11 +54,14 @@ See: [`exp.Rmd`](./exp.Rmd)
 - R packages: `tidyverse`, `gtools`, `rmarkdown`, `ggplot2`, `dplyr`
 - External: `featureCounts` (Subread), `BLAST+`, `MAFFT`
 
+The exact versions of the used programs is available in the corresponding markdowns
+
 ---
 
-## 📚 Citation
+## 📚 Citation and resources
 
-> This project was developed by Krystian Budzik as part of a bachelor’s thesis in the Genomics and Experimental Evolution Team, Institute of Environmental Sciences.  
-> Supervisor: Prof. dr. hab. Wiesław Babik
-> Reviewer: Dr. hab. Katarzyna Tomala  
-> Institute of Environmental Sciences, Faculty of Biology
+> This project was developed by Krystian Budzik as part of a bachelor’s thesis in the Genomics and Experimental Evolution Team, Jagiellonian University.  
+> Supervisor: Prof. dr. hab. Wiesław Babik, Institute of Environmental Sciences, Faculty of Biology, JU
+> Reviewer: Dr. hab. Katarzyna Tomala, Institute of Environmental Sciences, Faculty of Biology, JU  
+> Materials used for the expression quantification (BAM files) come from the work *ref Babik*, done in the Genomic and Experimental Evolution Team, JU
+> Genomic data comes from the work *ref Pleuro genome*

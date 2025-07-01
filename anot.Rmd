@@ -1,24 +1,35 @@
 ---
 title: "TLR gene annotation in *Pleurodeles waltl*"
 author: "Krystian Budzik"
-date: "`r format(Sys.Date(), '%d %B %Y')`"
+
 output:
   html_document:
     toc: true
     toc_depth: 3
     theme: flatly
+    highlight: tango
+    css: styles.css
   pdf_document:
     toc: true
     toc_depth: 3
     keep_tex: true
 ---
 
-## BLAST-p program
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(tidyverse)
+ 
+```
 
-# Making BLAST protein library
+# BLAST-p program
 
-```{bash, eval=FALSE}
-# dbtype prot = protein library 
+## Making BLAST protein database
+
+The BLAST protein database was made based on the **GCF_031143425.1_aPleWal1.hap1.20221129_protein.faa** file, using the *dbtype prot* argument. 
+
+```bash
+ 
 makeblastdb \
   -in GCF_031143425.1_aPleWal1.hap1.20221129_protein.faa \
   -dbtype prot \
@@ -27,13 +38,13 @@ makeblastdb \
 ```
 
 
-# Running BLAST-p
+## Running BLAST-p
 
-Based on *Pleurodeles'* set of AA sequences (pleurodeles_db) as the query, and *Lissotriton* TLR genes AA sequences as the set of the subjects (Lissotriton_TLR_proteins.fas), BLAST-p was performed:
+Based on *Pleurodeles'* set of AA sequences (pleurodeles_db) as the query, and *Lissotriton* TLR genes AA sequences as the set of the subjects (**Lissotriton_TLR_proteins.fas**), BLAST-p was performed:
 
-```{bash, eval=FALSE}
+```bash
 
-# Only evalue greater than 1e-10
+# Only evalue smaller than 1e-10
 
 blastp \
   -query Lissotriton_TLR_proteins.fas \
@@ -44,27 +55,29 @@ blastp \
 ```
 
 
-## BLAST-p output
+# BLAST-p output
 
 The following output has been analyzed in terms of relevance. As the output was found satisfactory, and genes indeed were found with relative high bit score and E-value equal to 0, the decision had been made to sort out all the non-zero E-values from the column 11 (V11).
 
 After sorting out E-value, only highest bitscores from each subject (V2) were selected. 
 
-# Picking the E-vaule = 0 only
 
-```{r}
-# anot1 <- subset(tlr_1, V11 == 0.0)
+## Picking the E-vaule = 0 only
+
+```{r, eval=TRUE}
+anot1 <- subset(tlr_1, V11 == 0.0)
 ```
 
-# Highest bit-score sorting
 
-```{r}
+## Highest bit-score sorting
+
+```{r, eval=FALSE}
 library(dplyr)
 
-#anot2 <- anot1 %>%
-#  group_by(V2) %>%
-#  slice_max(order_by = V12, n = 1, with_ties = FALSE) %>%
-#  ungroup()
+anot2 <- anot1 %>%
+  group_by(V2) %>%
+  slice_max(order_by = V12, n = 1, with_ties = FALSE) %>%
+  ungroup()
 ```
 
 The output set was examined to determine if it contains only the highest bitscore for each query (V1) TLR category. In four cased it did not:
@@ -74,6 +87,67 @@ The output set was examined to determine if it contains only the highest bitscor
 3. TLR9B
 4. TLR14
 
-All aberrations were checked for having higher hits in different queries. After an assessment, the decision needs to be made for each lower bitscore. This process has been described in the *Alignment* markdown.
+All aberrations were checked for having higher hits in different queries. After an assessment, the decision needs to be made for each lower bitscore. This process has been described in the **Alignment** markdown.
 
-## Annotation with the .gtf file
+
+# Annotation with the .gtf file
+
+File **anot2** has been loaded on the server with the GTF file **GCF_031143425.1_aPleWal1.hap1.20221129_genomic.gtf**. The goal was to extract the gene ID for each subject and, ultimately, make a master table for annotation. This allows the extraction of any information from the GTF file (chromosomal location, nucleotide position, strand, etc.).
+
+
+## Extracting CDS
+
+The following command was performed to cut only the CDS records from the GTF file and save them to the new GTF.
+
+```bash
+
+grep -w "CDS" GCF_031143425.1_aPleWal1.hap1.20221129_genomic.gtf  > CDS_anot.gtf
+```
+
+
+## Extracting subjects
+
+The subjects column was cut from the **anot2** file, then tailed to remove the heading. Consequently, the grep was performed to choose only the cut subjects from the previously made **CDS_anot.gtf** file with coding sequences only. 
+
+```bash
+
+cut -f2 anot2.txt > subjects.txt
+tail -n +2 subjects.txt > subjects2.txt
+grep -Ff subjects2.txt CDS_anot.gtf > anot3_1.txt
+```
+
+## Extracting only the needed gene and protein ID columns
+
+The file **anot3_1** consists of all the columns that the original GTF file has. For the sake of creating a master table, only the pair of the gene and protein ID columns needs to be subtracted from the annotation file.
+
+For this, the *awk* program was performed, and the **anot4_1** table was created. The table contains a pair of gene and protein IDs.  
+
+```bash
+
+awk 'BEGIN{FS="\t"} {print $9}' anot3_1.txt | awk '{print $6, $8}' | sort  | uniq > anot4.txt
+
+tr -d '";' < anot4.txt > anot4_1.txt 
+```
+
+## Joining the Gene ID and BLAST output
+
+Cleaning from irrelevant naming:
+
+```{r, eval=FALSE}
+anot4_1$gene_id <- gsub("GeneID:", "", anot4_1$gene_id)
+anot4_1$subject <- gsub("GenBank:", "", anot4_1$subject)
+```
+
+Adding the query name:
+
+```{r, eval=FALSE}
+anot2_1 <- anot2 %>% select(name, prot_id)
+anot5 <- anot4_1 %>%
+  left_join(anot2_1, by = "prot_id")
+```
+
+Now, all needed information can be taken from the *anot2* BLAST-p output, and the *anot5* annotation.
+
+# Final remarks
+
+In the later steps, e.g, expression analysis by *featureCounts*, a different GTF file is used due to the scaffold naming. All the information yielded in this step, with the **GCF_031143425.1_aPleWal1.hap1.20221129_genomic.gtf** is relevant, because no scaffold info was taken in any output file.  

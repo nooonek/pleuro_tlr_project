@@ -12,7 +12,7 @@
 <meta name="author" content="Krystian Budzik" />
 
 
-<title>TLR gene annotation in Pleurodeles waltl</title>
+<title>TLR expression analysis in Pleurodeles waltl</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -452,7 +452,7 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">TLR gene annotation in <em>Pleurodeles
+<h1 class="title toc-ignore">TLR expression analysis in <em>Pleurodeles
 waltl</em></h1>
 <h4 class="author">Krystian Budzik</h4>
 
@@ -460,161 +460,443 @@ waltl</em></h1>
 
 <div id="TOC">
 <ul>
-<li><a href="#blast-p-program" id="toc-blast-p-program">BLAST-p
-program</a>
+<li><a href="#initial-remarks" id="toc-initial-remarks">Initial
+remarks</a>
 <ul>
-<li><a href="#making-blast-protein-database" id="toc-making-blast-protein-database">Making BLAST protein
-database</a></li>
-<li><a href="#running-blast-p" id="toc-running-blast-p">Running
-BLAST-p</a></li>
+<li><a href="#gtf-file" id="toc-gtf-file">GTF file</a></li>
+<li><a href="#uncertain-annotations" id="toc-uncertain-annotations">Uncertain annotations</a></li>
 </ul></li>
-<li><a href="#blast-p-output" id="toc-blast-p-output">BLAST-p output</a>
+<li><a href="#featurecounts" id="toc-featurecounts">featureCounts</a>
 <ul>
-<li><a href="#picking-the-e-vaule-0-only" id="toc-picking-the-e-vaule-0-only">Picking the E-vaule = 0
-only</a></li>
-<li><a href="#highest-bit-score-sorting" id="toc-highest-bit-score-sorting">Highest bit-score sorting</a></li>
-</ul></li>
-<li><a href="#annotation-with-the-.gtf-file" id="toc-annotation-with-the-.gtf-file">Annotation with the .gtf file</a>
+<li><a href="#input" id="toc-input">Input</a>
 <ul>
-<li><a href="#extracting-cds" id="toc-extracting-cds">Extracting
-CDS</a></li>
-<li><a href="#extracting-subjects" id="toc-extracting-subjects">Extracting subjects</a></li>
-<li><a href="#extracting-only-the-needed-gene-and-protein-id-columns" id="toc-extracting-only-the-needed-gene-and-protein-id-columns">Extracting
-only the needed gene and protein ID columns</a></li>
-<li><a href="#joining-the-gene-id-and-blast-output" id="toc-joining-the-gene-id-and-blast-output">Joining the Gene ID and
-BLAST output</a></li>
+<li><a href="#cds-and-exon-records" id="toc-cds-and-exon-records">CDS
+and exon records</a></li>
 </ul></li>
-<li><a href="#final-remarks" id="toc-final-remarks">Final
-remarks</a></li>
+<li><a href="#featurecounts-execution" id="toc-featurecounts-execution">featureCounts execution</a>
+<ul>
+<li><a href="#why-cds-not-exon" id="toc-why-cds-not-exon">Why CDS, not
+exon?</a></li>
+</ul></li>
+<li><a href="#output" id="toc-output">Output</a></li>
+</ul></li>
+<li><a href="#output-files-processing" id="toc-output-files-processing">Output files processing</a>
+<ul>
+<li><a href="#fc_data" id="toc-fc_data">fc_data</a>
+<ul>
+<li><a href="#cleaning-from-the-irrelevant-naming" id="toc-cleaning-from-the-irrelevant-naming">Cleaning from the
+irrelevant naming</a></li>
+<li><a href="#adding-gene-id-instead-of-gene-name" id="toc-adding-gene-id-instead-of-gene-name">Adding gene ID instead of
+gene name</a></li>
+<li><a href="#adding-the-gene-name-column" id="toc-adding-the-gene-name-column">Adding the gene name
+column</a></li>
+</ul></li>
+<li><a href="#fc_summary" id="toc-fc_summary">fc_summary</a>
+<ul>
+<li><a href="#summing-the-features" id="toc-summing-the-features">Summing the features</a></li>
+</ul></li>
+<li><a href="#joining-in-the-long-format" id="toc-joining-in-the-long-format">Joining in the long format</a></li>
+</ul></li>
+<li><a href="#fpkm-and-tpm" id="toc-fpkm-and-tpm">FPKM and TPM</a>
+<ul>
+<li><a href="#fpkm-computation" id="toc-fpkm-computation">FPKM
+computation</a>
+<ul>
+<li><a href="#preparing-the-fpkm-set-to-join-the-full-data-set" id="toc-preparing-the-fpkm-set-to-join-the-full-data-set">Preparing the
+FPKM set to join the full data set</a></li>
+</ul></li>
+<li><a href="#tpm-computation" id="toc-tpm-computation">TPM
+computation</a></li>
+<li><a href="#tpm" id="toc-tpm">TPM</a></li>
+</ul></li>
+<li><a href="#sample-info" id="toc-sample-info">Sample info</a>
+<ul>
+<li><a href="#loading" id="toc-loading">Loading</a></li>
+<li><a href="#joining" id="toc-joining">Joining</a></li>
+<li><a href="#master-table-preparation" id="toc-master-table-preparation">Master table preparation</a></li>
+<li><a href="#preparing-a-short-name-category-for-tlr" id="toc-preparing-a-short-name-category-for-tlr">Preparing a short name
+category for TLR</a></li>
+<li><a href="#setting-the-right-order-of-the-tlr-names" id="toc-setting-the-right-order-of-the-tlr-names">Setting the right
+order of the TLR names</a></li>
+</ul></li>
+<li><a href="#visualisation" id="toc-visualisation">Visualisation</a>
+<ul>
+<li><a href="#fpkm-based-global-tlr-expression-plot" id="toc-fpkm-based-global-tlr-expression-plot">FPKM-based global TLR
+expression plot</a>
+<ul>
+<li><a href="#fpkm-sum-and-mean-fpkm-in-each-developmental-group" id="toc-fpkm-sum-and-mean-fpkm-in-each-developmental-group">FPKM sum and
+mean FPKM in each developmental group</a></li>
+<li><a href="#global-expression-plot" id="toc-global-expression-plot">Global expression plot</a></li>
+</ul></li>
+<li><a href="#tpm-based-relative-expression-plot" id="toc-tpm-based-relative-expression-plot">TPM-based relative
+expression plot</a></li>
+</ul></li>
 </ul>
 </div>
 
-<div id="blast-p-program" class="section level1">
-<h1>BLAST-p program</h1>
-<div id="making-blast-protein-database" class="section level2">
-<h2>Making BLAST protein database</h2>
-<p>The BLAST protein database was made based on the
-<strong>GCF_031143425.1_aPleWal1.hap1.20221129_protein.faa</strong>
-file, using the <em>dbtype prot</em> argument.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a> </span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">makeblastdb</span> <span class="dt">\</span></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>  <span class="at">-in</span> GCF_031143425.1_aPleWal1.hap1.20221129_protein.faa <span class="dt">\</span></span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>  <span class="at">-dbtype</span> prot <span class="dt">\</span></span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>  <span class="at">-out</span> pleurodeles_db <span class="dt">\</span></span></code></pre></div>
+<div id="initial-remarks" class="section level1">
+<h1>Initial remarks</h1>
+<div id="gtf-file" class="section level2">
+<h2>GTF file</h2>
+<p>In this section, the different GTF file was used than in the
+<strong>Annotation</strong> markdown pipeline. For the sake of the
+<em>featureCounts</em> program, different scaffold naming must be
+included. This is the only difference, which does not affect
+compatibility between the work stages.</p>
 </div>
-<div id="running-blast-p" class="section level2">
-<h2>Running BLAST-p</h2>
-<p>Based on <em>Pleurodeles’</em> set of AA sequences (pleurodeles_db)
-as the query, and <em>Lissotriton</em> TLR genes AA sequences as the set
-of the subjects (<strong>Lissotriton_TLR_proteins.fas</strong>), BLAST-p
-was performed:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a></span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co"># Only evalue smaller than 1e-10</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="ex">blastp</span> <span class="dt">\</span></span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">-query</span> Lissotriton_TLR_proteins.fas <span class="dt">\</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">-db</span> pleurodeles_db <span class="dt">\</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">-out</span> results/wyniki2.txt <span class="dt">\</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">-evalue</span> 1e-10 <span class="dt">\</span></span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">-outfmt</span> 6</span></code></pre></div>
+<div id="uncertain-annotations" class="section level2">
+<h2>Uncertain annotations</h2>
+<p>Not all the subjects were equally matched with their query (lower
+than others’ bitscore). This is described in the
+<strong>Annotation</strong> markdown. For the sake of FPKM and TPM
+computation, this topic is irrelevant. Further discussion of this case
+can be found in <strong>Annotation</strong> and *Alignment**
+markdowns.</p>
 </div>
 </div>
-<div id="blast-p-output" class="section level1">
-<h1>BLAST-p output</h1>
-<p>The following output has been analyzed in terms of relevance. As the
-output was found satisfactory, and genes indeed were found with relative
-high bit score and E-value equal to 0, the decision had been made to
-sort out all the non-zero E-values from the column 11 (V11).</p>
-<p>After sorting out E-value, only highest bitscores from each subject
-(V2) were selected.</p>
-<div id="picking-the-e-vaule-0-only" class="section level2">
-<h2>Picking the E-vaule = 0 only</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>anot1 <span class="ot">&lt;-</span> <span class="fu">subset</span>(tlr_1, V11 <span class="sc">==</span> <span class="fl">0.0</span>)</span></code></pre></div>
-</div>
-<div id="highest-bit-score-sorting" class="section level2">
-<h2>Highest bit-score sorting</h2>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>anot2 <span class="ot">&lt;-</span> anot1 <span class="sc">%&gt;%</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="fu">group_by</span>(V2) <span class="sc">%&gt;%</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="fu">slice_max</span>(<span class="at">order_by =</span> V12, <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code></pre></div>
-<p>The output set was examined to determine if it contains only the
-highest bitscore for each query (V1) TLR category. In four cased it did
-not:</p>
-<ol style="list-style-type: decimal">
-<li>TLR01</li>
-<li>TLR03</li>
-<li>TLR9B</li>
-<li>TLR14</li>
-</ol>
-<p>All aberrations were checked for having higher hits in different
-queries. After an assessment, the decision needs to be made for each
-lower bitscore. This process has been described in the
-<strong>Alignment</strong> markdown.</p>
+<div id="featurecounts" class="section level1">
+<h1>featureCounts</h1>
+<p>For the analysis, the <em>subread-2.0.6-Linux-x86_64</em> package was
+used on the remote server.</p>
+<div id="input" class="section level2">
+<h2>Input</h2>
+<p>For the input, the
+<strong>GCF_031143425.1_aPleWal1.hap1.20221129_genomic_scafolds_renamed.gtf</strong>
+GTF file was searched for <em>CDS</em> or <em>exon</em> sequences.
+Subsequently, the following set has been confined only to the records,
+which include Gene ID from the <em>anot4_1</em> file.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">cut</span> <span class="at">-d</span><span class="st">&#39; &#39;</span> <span class="at">-f1</span> anot4_1.txt <span class="op">&gt;</span> gene_id_list.txt</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-w</span> <span class="at">-E</span>  <span class="st">&quot;CDS|exon&quot;</span> GCF_031143425.1_aPleWal1.hap1.20221129_genomic_scafolds_renamed.gtf <span class="op">&gt;</span> CDS_exon_anot.gtf</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-Ff</span> gene_id_list.txt CDS_exon_anot.gtf <span class="op">&gt;</span> anot3_2.txt</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="fu">cp</span> anot3_1.txt prot_id_CDS.gtf</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="fu">cp</span> anot3_2.txt gene_id_CDS_exon.gtf</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Done!&quot;</span> </span></code></pre></div>
+<div id="cds-and-exon-records" class="section level3">
+<h3>CDS and exon records</h3>
+<p>The GTF file was searched for both CDS and exon records. The
+<em>featureCounts</em> program can be run on both sequence types, with a
+relevant output in this type of work.</p>
 </div>
 </div>
-<div id="annotation-with-the-.gtf-file" class="section level1">
-<h1>Annotation with the .gtf file</h1>
-<p>File <strong>anot2</strong> has been loaded on the server with the
-GTF file
-<strong>GCF_031143425.1_aPleWal1.hap1.20221129_genomic.gtf</strong>. The
-goal was to extract the gene ID for each subject and, ultimately, make a
-master table for annotation. This allows the extraction of any
-information from the GTF file (chromosomal location, nucleotide
-position, strand, etc.).</p>
-<div id="extracting-cds" class="section level2">
-<h2>Extracting CDS</h2>
-<p>The following command was performed to cut only the CDS records from
-the GTF file and save them to the new GTF.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-w</span> <span class="st">&quot;CDS&quot;</span> GCF_031143425.1_aPleWal1.hap1.20221129_genomic.gtf  <span class="op">&gt;</span> CDS_anot.gtf</span></code></pre></div>
-</div>
-<div id="extracting-subjects" class="section level2">
-<h2>Extracting subjects</h2>
-<p>The subjects column was cut from the <strong>anot2</strong> file,
-then tailed to remove the heading. Consequently, the grep was performed
-to choose only the cut subjects from the previously made
-<strong>CDS_anot.gtf</strong> file with coding sequences only.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">cut</span> <span class="at">-f2</span> anot2.txt <span class="op">&gt;</span> subjects.txt</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="fu">tail</span> <span class="at">-n</span> +2 subjects.txt <span class="op">&gt;</span> subjects2.txt</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="fu">grep</span> <span class="at">-Ff</span> subjects2.txt CDS_anot.gtf <span class="op">&gt;</span> anot3_1.txt</span></code></pre></div>
-</div>
-<div id="extracting-only-the-needed-gene-and-protein-id-columns" class="section level2">
-<h2>Extracting only the needed gene and protein ID columns</h2>
-<p>The file <strong>anot3_1</strong> consists of all the columns that
-the original GTF file has. For the sake of creating a master table, only
-the pair of the gene and protein ID columns needs to be subtracted from
-the annotation file.</p>
-<p>For this, the <em>awk</em> program was performed, and the
-<strong>anot4_1</strong> table was created. The table contains a pair of
-gene and protein IDs.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="fu">awk</span> <span class="st">&#39;BEGIN{FS=&quot;\t&quot;} {print $9}&#39;</span> anot3_1.txt <span class="kw">|</span> <span class="fu">awk</span> <span class="st">&#39;{print $6, $8}&#39;</span> <span class="kw">|</span> <span class="fu">sort</span>  <span class="kw">|</span> <span class="fu">uniq</span> <span class="op">&gt;</span> anot4.txt</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">tr</span> <span class="at">-d</span> <span class="st">&#39;&quot;;&#39;</span> <span class="op">&lt;</span> anot4.txt <span class="op">&gt;</span> anot4_1.txt </span></code></pre></div>
-</div>
-<div id="joining-the-gene-id-and-blast-output" class="section level2">
-<h2>Joining the Gene ID and BLAST output</h2>
-<p>Cleaning from irrelevant naming:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>anot4_1<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;GeneID:&quot;</span>, <span class="st">&quot;&quot;</span>, anot4_1<span class="sc">$</span>gene_id)</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>anot4_1<span class="sc">$</span>subject <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;GenBank:&quot;</span>, <span class="st">&quot;&quot;</span>, anot4_1<span class="sc">$</span>subject)</span></code></pre></div>
-<p>Adding the query name:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>anot2_1 <span class="ot">&lt;-</span> anot2 <span class="sc">%&gt;%</span> <span class="fu">select</span>(name, prot_id)</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>anot5 <span class="ot">&lt;-</span> anot4_1 <span class="sc">%&gt;%</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="fu">left_join</span>(anot2_1, <span class="at">by =</span> <span class="st">&quot;prot_id&quot;</span>)</span></code></pre></div>
-<p>Now, all needed information can be taken from the <em>anot2</em>
-BLAST-p output, and the <em>anot5</em> annotation.</p>
+<div id="featurecounts-execution" class="section level2">
+<h2>featureCounts execution</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="ex">~/bin/featureCounts</span> <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">-a</span> gene_id_CDS_exon.gtf <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">-o</span> tlr_counts_fc.txt <span class="dt">\</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">-t</span> CDS <span class="dt">\</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">-g</span> gene_id <span class="dt">\</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">-s</span> 0 <span class="dt">\</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">-p</span> <span class="dt">\</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">-B</span> <span class="dt">\</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">--countReadPairs</span> <span class="dt">\</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>  <span class="at">-T</span> 4 <span class="dt">\</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a> ./bams/<span class="pp">*</span>.bam</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Done!&quot;</span></span></code></pre></div>
+<p>Where:</p>
+<pre><code>-a = input file
+-o = output file
+-t = sequence type (CDS selected)
+-g = atribute from the GTF file
+-s = strand specificity (0 = both strands count)
+-p = paired-end count
+-B = only properly mapped pairs
+--countReadPairs = pairs counted
+-T = CPUt threads
+./* = input BAM files</code></pre>
+<div id="why-cds-not-exon" class="section level3">
+<h3>Why CDS, not exon?</h3>
+<p>CDS attribute was selected to perform the <em>featureCounts</em>,
+instead of the exon. This decision was arbitrary.</p>
+<p>CDS coming from the annotation naturally restricts us to the coding
+sequence of a gene, which is more accurate than the first and last exon
+boundaries, which include the UTR, which are often poorly annotated.</p>
 </div>
 </div>
-<div id="final-remarks" class="section level1">
-<h1>Final remarks</h1>
-<p>In the later steps, e.g, expression analysis by
-<em>featureCounts</em>, a different GTF file is used due to the
-chromosome naming. All the information yielded in this step, with the
-<strong>GCF_031143425.1_aPleWal1.hap1.20221129_genomic.gtf</strong> is
-relevant, because no chromosome info was taken in any output file.</p>
+<div id="output" class="section level2">
+<h2>Output</h2>
+<p><em>featureCounts</em> execution resulted in two files: 1.
+<strong>tlr_counts_fc.txt</strong> and 2.
+<strong>tlr_counts_fc.txt.summary</strong>. The first one is the</p>
+<p>Read number aligned with a gene.</p>
+<p>The second one is a summary, where the information about the number
+of paired, unpaired, unmapped, etc., reads can be found. Both ones are
+going to be used in subsequent steps of the expression analysis.</p>
+</div>
+</div>
+<div id="output-files-processing" class="section level1">
+<h1>Output files processing</h1>
+<p>Both <em>featureCounts</em> files were downloaded from the server and
+loaded into RStudio</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>tlr_counts_fc_data <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="st">&quot;tlr_counts_fc.txt&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>tlr_counts_fc_summary <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="st">&quot;tlr_counts_fc.txt.summary&quot;</span>)</span></code></pre></div>
+<div id="fc_data" class="section level2">
+<h2>fc_data</h2>
+<div id="cleaning-from-the-irrelevant-naming" class="section level3">
+<h3>Cleaning from the irrelevant naming</h3>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>tlr_counts_fc_data <span class="ot">&lt;-</span> <span class="fu">rename</span>(tlr_counts_fc_data, <span class="at">gene_id =</span> Geneid)</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>tlr_counts_fc_data<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;LOC&quot;</span>, <span class="st">&quot;&quot;</span>, tlr_counts_fc_data<span class="sc">$</span>gene_id)</span></code></pre></div>
+</div>
+<div id="adding-gene-id-instead-of-gene-name" class="section level3">
+<h3>Adding gene ID instead of gene name</h3>
+<p>Some records were automatically annotated as TLR2, TLR3, etc. For
+clarity purposes, these gene names were replaced by the proper gene ID
+of each gene.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>tlr_counts_fc_data<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;TLR2&quot;</span>, <span class="st">&quot;138303579&quot;</span>, tlr_counts_fc_data<span class="sc">$</span>gene_id)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>tlr_counts_fc_data<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;TLR3&quot;</span>, <span class="st">&quot;138245949&quot;</span>, tlr_counts_fc_data<span class="sc">$</span>gene_id)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>tlr_counts_fc_data<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;TLR5&quot;</span>, <span class="st">&quot;138295498&quot;</span>, tlr_counts_fc_data<span class="sc">$</span>gene_id)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>tlr_counts_fc_data<span class="sc">$</span>gene_id <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">&quot;TLR8&quot;</span>, <span class="st">&quot;138250171&quot;</span>, tlr_counts_fc_data<span class="sc">$</span>gene_id)</span></code></pre></div>
+</div>
+<div id="adding-the-gene-name-column" class="section level3">
+<h3>Adding the gene name column</h3>
+<p>During the work, the uncertain annotation of the TLR01 gene described
+in the <strong>Alignment</strong> markdown was identified as the TLR01L.
+This change was applied to the annotation dataset used to join the gene
+name to the rest of the expression data.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>geneid_name <span class="ot">&lt;-</span> anot5 <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="dv">1</span>, <span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">name =</span> <span class="fu">if_else</span>(gene_id <span class="sc">==</span> <span class="st">&quot;138247579&quot;</span>, <span class="st">&quot;TLR01L&quot;</span>, name))</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>tlr_counts_fc_names <span class="ot">&lt;-</span> tlr_counts_fc_data <span class="sc">%&gt;%</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="fu">left_join</span>(geneid_name, <span class="at">by =</span> <span class="st">&quot;gene_id&quot;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="fc_summary" class="section level2">
+<h2>fc_summary</h2>
+<div id="summing-the-features" class="section level3">
+<h3>Summing the features</h3>
+<p>For the subsequent computational steps, a sum of the features in each
+sample was needed. The sum was defined as <em>Assigned</em> +
+<em>unassigned_noFeatures</em>, as these two categories include the
+relevant reads only, omitting unmapped and unpaired ones.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>features_sum <span class="ot">&lt;-</span> tlr_counts_fc_summary <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="fu">filter</span>(Status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Assigned&quot;</span>, <span class="st">&quot;Unassigned_NoFeatures&quot;</span>))</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>numeric_cols <span class="ot">&lt;-</span> features_sum[, <span class="sc">-</span><span class="dv">1</span>] <span class="sc">%&gt;%</span> <span class="fu">mutate_all</span>(as.numeric)</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>total_row <span class="ot">&lt;-</span> <span class="fu">colSums</span>(numeric_cols)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>total_named <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">Status =</span> <span class="st">&quot;Features_sum&quot;</span>, total_row)</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>features_sum <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  features_sum,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="fu">as.data.frame</span>(<span class="fu">t</span>(total_named), <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+</div>
+<div id="joining-in-the-long-format" class="section level2">
+<h2>Joining in the long format</h2>
+<p>The master table for the FPKM and TPM computation was prepared by
+formatting the datasets to the long format and joining them
+together.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>tlr_long <span class="ot">&lt;-</span> tlr_counts_fc_names <span class="sc">%&gt;%</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">matches</span>(<span class="st">&quot;</span><span class="sc">\\</span><span class="st">.bam$&quot;</span>), </span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">&quot;sample&quot;</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">&quot;counts&quot;</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  )</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>summary_long <span class="ot">&lt;-</span> features_sum <span class="sc">%&gt;%</span> <span class="fu">slice</span>(<span class="fu">c</span>(<span class="dv">3</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">matches</span>(<span class="st">&quot;</span><span class="sc">\\</span><span class="st">.bam$&quot;</span>),</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">&quot;sample&quot;</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">&quot;features_sum&quot;</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> <span class="fu">select</span>(sample, features_sum)</span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>tlr_long_total <span class="ot">&lt;-</span> tlr_long <span class="sc">%&gt;%</span> <span class="fu">left_join</span>(summary_long, <span class="at">by =</span> <span class="st">&quot;sample&quot;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="fpkm-and-tpm" class="section level1">
+<h1>FPKM and TPM</h1>
+<div id="fpkm-computation" class="section level2">
+<h2>FPKM computation</h2>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>tlr_fpkm_all <span class="ot">&lt;-</span> tlr_long_total <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="at">length_kb =</span> Length <span class="sc">/</span> <span class="dv">1000</span>,</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>    <span class="at">rpk =</span> counts <span class="sc">/</span> length_kb,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>    <span class="at">fpkm =</span> (rpk <span class="sc">/</span> features_sum) <span class="sc">*</span> <span class="fl">1e6</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  ) </span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>tlr_fpkm <span class="ot">&lt;-</span> tlr_fpkm_all <span class="sc">%&gt;%</span> <span class="fu">select</span>(name, gene_id, sample, fpkm)</span></code></pre></div>
+<div id="preparing-the-fpkm-set-to-join-the-full-data-set" class="section level3">
+<h3>Preparing the FPKM set to join the full data set</h3>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>tlr_fpkm_join <span class="ot">&lt;-</span> tlr_fpkm <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">sample =</span> <span class="fu">str_extract</span>(sample, <span class="st">&quot;Pw[^.]+&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="fu">select</span>(gene_id, sample, fpkm)</span></code></pre></div>
+</div>
+</div>
+<div id="tpm-computation" class="section level2">
+<h2>TPM computation</h2>
+</div>
+<div id="tpm" class="section level2">
+<h2>TPM</h2>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>tlr_rpk_sum <span class="ot">&lt;-</span> tlr_fpkm_all <span class="sc">%&gt;%</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="fu">group_by</span>(sample) <span class="sc">%&gt;%</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">total_rpk =</span> <span class="fu">sum</span>(rpk, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>tlr_long_total <span class="ot">&lt;-</span> tlr_long_total <span class="sc">%&gt;%</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  <span class="fu">left_join</span>(tlr_rpk_sum, <span class="at">by =</span> <span class="st">&quot;sample&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>tlr_tpm_all <span class="ot">&lt;-</span> tlr_long_total <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>    <span class="at">length_kb =</span> Length <span class="sc">/</span> <span class="dv">1000</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>    <span class="at">rpk =</span> counts <span class="sc">/</span> length_kb,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>    <span class="at">scalling_factor =</span> total_rpk.x <span class="sc">/</span> <span class="fl">1e6</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>    <span class="at">tpm =</span> (rpk <span class="sc">/</span> scalling_factor),</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>    <span class="at">tpm_percent =</span> (tpm <span class="sc">/</span> <span class="fl">1e4</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  ) </span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>tlr_tpm_all <span class="ot">&lt;-</span> tlr_tpm_all <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(total_rpk.x, total_rpk.y))</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>tlr_tpm <span class="ot">&lt;-</span> tlr_tpm_all <span class="sc">%&gt;%</span> <span class="fu">select</span>(name, gene_id, length_kb, sample, tpm, tpm_percent)</span></code></pre></div>
+</div>
+</div>
+<div id="sample-info" class="section level1">
+<h1>Sample info</h1>
+<div id="loading" class="section level3">
+<h3>Loading</h3>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>Pw_sample_info <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="st">&quot;Pw_sample_info.txt&quot;</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>Pw_individual_info <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(<span class="st">&quot;Pw_individual_info.txt&quot;</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>Pw_sample_info_2 <span class="ot">&lt;-</span> Pw_sample_info <span class="sc">%&gt;%</span> <span class="fu">left_join</span>(Pw_individual_info, <span class="at">by =</span> <span class="st">&quot;ID&quot;</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>Pw_sample_info_cut <span class="ot">&lt;-</span> Pw_sample_info_2 <span class="sc">%&gt;%</span> <span class="fu">select</span>(sample, part, stage_descr)</span></code></pre></div>
+</div>
+<div id="joining" class="section level3">
+<h3>Joining</h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>tlr_tpm_description <span class="ot">&lt;-</span> tlr_tpm <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">sample =</span> <span class="fu">str_extract</span>(sample, <span class="st">&quot;Pw[^.]+&quot;</span>)) <span class="sc">%&gt;%</span>  </span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  </span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="fu">left_join</span>(Pw_sample_info_cut, <span class="at">by =</span> <span class="st">&quot;sample&quot;</span>)</span></code></pre></div>
+</div>
+<div id="master-table-preparation" class="section level3">
+<h3>Master table preparation</h3>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>tlr_tpm_fpkm_dataset <span class="ot">&lt;-</span> tlr_tpm_description <span class="sc">%&gt;%</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="fu">left_join</span>(tlr_fpkm_join, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;sample&quot;</span>, <span class="st">&quot;gene_id&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>  <span class="co"># Subgroups – ontogenetic stages used in the visualisation</span></span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dev_subgroup =</span> <span class="fu">case_when</span>(</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>    stage_descr <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;three_fingers&quot;</span>, <span class="st">&quot;three_toes&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Young larva&quot;</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>    stage_descr <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;four_toes&quot;</span>, <span class="st">&quot;five_toes&quot;</span>, <span class="st">&quot;full_dev&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Older larva&quot;</span>,</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>    stage_descr <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;pre_meta&quot;</span>, <span class="st">&quot;mid_meta&quot;</span>, <span class="st">&quot;post_meta&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Metamorphosis&quot;</span>,</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>    stage_descr <span class="sc">==</span> <span class="st">&quot;adult&quot;</span> <span class="sc">~</span> <span class="st">&quot;Adult&quot;</span>,</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> stage_descr</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>  <span class="co"># General groups - not used</span></span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">dev_group =</span> <span class="fu">case_when</span>(</span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a>    dev_subgroup <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Young larva&quot;</span>, <span class="st">&quot;Older larva&quot;</span>) <span class="sc">~</span> <span class="st">&quot;Larva&quot;</span>,</span>
+<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a>    dev_subgroup <span class="sc">==</span> <span class="st">&quot;Metamorphosis&quot;</span> <span class="sc">~</span> <span class="st">&quot;Metamorphosis&quot;</span>,</span>
+<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a>    dev_subgroup <span class="sc">==</span> <span class="st">&quot;Adult&quot;</span> <span class="sc">~</span> <span class="st">&quot;Adult&quot;</span>,</span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">&quot;other&quot;</span></span>
+<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a></span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a>  <span class="co"># Setting the right order of the categories</span></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a>    <span class="at">dev_subgroup =</span> <span class="fu">factor</span>(dev_subgroup, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;Young larva&quot;</span>, <span class="st">&quot;Older larva&quot;</span>, <span class="st">&quot;Metamorphosis&quot;</span>, <span class="st">&quot;Adult&quot;</span>)),</span>
+<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a>    <span class="at">dev_group =</span> <span class="fu">factor</span>(dev_group, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;Larva&quot;</span>, <span class="st">&quot;Metamorphosis&quot;</span>, <span class="st">&quot;Adult&quot;</span>))</span>
+<span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a>  )</span></code></pre></div>
+</div>
+<div id="preparing-a-short-name-category-for-tlr" class="section level3">
+<h3>Preparing a short name category for TLR</h3>
+<p>The short name category is going to be used in the data visualization
+using the <em>ggplot2</em> library.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>tlr_tpm_fpkm_dataset <span class="ot">&lt;-</span> tlr_tpm_fpkm_dataset <span class="sc">%&gt;%</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tlr_short0 =</span> <span class="fu">gsub</span>(<span class="st">&quot;^TLR&quot;</span>, <span class="st">&quot;&quot;</span>, name)) <span class="co"># Removes &quot;TLR&quot;</span></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  </span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  tlr_tpm_fpkm_dataset <span class="ot">&lt;-</span> tlr_tpm_fpkm_dataset <span class="sc">%&gt;%</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tlr_short =</span> <span class="fu">gsub</span>(<span class="st">&quot;0&quot;</span>, <span class="st">&quot;&quot;</span>, tlr_short0)) <span class="sc">%&gt;%</span> <span class="co"># Removes &quot;0&quot;</span></span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">&quot;tlr_short0&quot;</span>))</span></code></pre></div>
+</div>
+<div id="setting-the-right-order-of-the-tlr-names" class="section level3">
+<h3>Setting the right order of the TLR names</h3>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">library</span>(gtools)</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co"># Sorting</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>tlr_order <span class="ot">&lt;-</span> <span class="fu">mixedsort</span>(<span class="fu">unique</span>(tlr_tpm_fpkm_dataset<span class="sc">$</span>tlr_short))</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="co"># Factor</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>tlr_tpm_fpkm_dataset <span class="ot">&lt;-</span> tlr_tpm_fpkm_dataset <span class="sc">%&gt;%</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tlr_short =</span> <span class="fu">factor</span>(tlr_short, <span class="at">levels =</span> tlr_order))</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="co"># Check</span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="fu">levels</span>(tlr_tpm_fpkm_dataset<span class="sc">$</span>tlr_short)</span></code></pre></div>
+</div>
+</div>
+<div id="visualisation" class="section level1">
+<h1>Visualisation</h1>
+<div id="fpkm-based-global-tlr-expression-plot" class="section level2">
+<h2>FPKM-based global TLR expression plot</h2>
+<div id="fpkm-sum-and-mean-fpkm-in-each-developmental-group" class="section level3">
+<h3>FPKM sum and mean FPKM in each developmental group</h3>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="co"># FPKM sum for each sample</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>sample_fpkm_summary <span class="ot">&lt;-</span> tlr_tpm_fpkm_dataset <span class="sc">%&gt;%</span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>  <span class="fu">group_by</span>(sample, dev_subgroup) <span class="sc">%&gt;%</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">sample_sum_fpkm =</span> <span class="fu">sum</span>(fpkm, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">&quot;drop&quot;</span>)</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="co"># Mean FPKM in each developmental group</span></span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>subgroup_summary <span class="ot">&lt;-</span> sample_fpkm_summary <span class="sc">%&gt;%</span></span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>  <span class="fu">group_by</span>(dev_subgroup) <span class="sc">%&gt;%</span></span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>    <span class="at">mean_fpkm =</span> <span class="fu">mean</span>(sample_sum_fpkm),</span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>    <span class="at">sd_fpkm =</span> <span class="fu">sd</span>(sample_sum_fpkm),</span>
+<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>()</span>
+<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a>  )</span></code></pre></div>
+</div>
+<div id="global-expression-plot" class="section level3">
+<h3>Global expression plot</h3>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="co"># Colours</span></span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>group_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="st">&quot;Young larva&quot;</span> <span class="ot">=</span> <span class="st">&quot;#66c2a5&quot;</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="st">&quot;Older larva&quot;</span> <span class="ot">=</span> <span class="st">&quot;#fc8d62&quot;</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>  <span class="st">&quot;Metamorphosis&quot;</span> <span class="ot">=</span> <span class="st">&quot;#8da0cb&quot;</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>  <span class="st">&quot;Adult&quot;</span> <span class="ot">=</span> <span class="st">&quot;#ce4e9b&quot;</span></span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>)</span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a><span class="fu">ggplot</span>(sample_fpkm_summary, <span class="fu">aes</span>(<span class="at">x =</span> dev_subgroup, <span class="at">y =</span> sample_sum_fpkm, <span class="at">color =</span> dev_subgroup)) <span class="sc">+</span></span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="at">outlier.shape =</span> <span class="cn">NA</span>, <span class="at">fill =</span> <span class="cn">NA</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span> </span>
+<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a>  <span class="fu">geom_jitter</span>(<span class="at">width =</span> <span class="fl">0.2</span>, <span class="at">size =</span> <span class="dv">3</span>, <span class="at">alpha =</span> <span class="fl">0.8</span>) <span class="sc">+</span> </span>
+<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a>  <span class="fu">stat_summary</span>(<span class="at">fun =</span> mean, <span class="at">geom =</span> <span class="st">&quot;point&quot;</span>, <span class="at">color =</span> <span class="st">&quot;black&quot;</span>, <span class="at">shape =</span> <span class="dv">18</span>, <span class="at">size =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a>    <span class="at">title =</span> <span class="cn">NULL</span>,</span>
+<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
+<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">&quot;Total FPKM&quot;</span>,</span>
+<span id="cb20-20"><a href="#cb20-20" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">&quot;Stage&quot;</span></span>
+<span id="cb20-21"><a href="#cb20-21" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb20-22"><a href="#cb20-22" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">14</span>) <span class="sc">+</span></span>
+<span id="cb20-23"><a href="#cb20-23" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb20-24"><a href="#cb20-24" tabindex="-1"></a>    <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">13</span>),</span>
+<span id="cb20-25"><a href="#cb20-25" tabindex="-1"></a>    <span class="at">axis.title.x =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>, <span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">t =</span> <span class="dv">15</span>)),</span>
+<span id="cb20-26"><a href="#cb20-26" tabindex="-1"></a>    <span class="at">axis.title.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>, <span class="at">margin =</span> <span class="fu">margin</span>(<span class="at">r =</span> <span class="dv">15</span>)),</span>
+<span id="cb20-27"><a href="#cb20-27" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">&quot;none&quot;</span></span>
+<span id="cb20-28"><a href="#cb20-28" tabindex="-1"></a>    </span>
+<span id="cb20-29"><a href="#cb20-29" tabindex="-1"></a>  )</span></code></pre></div>
+</div>
+</div>
+<div id="tpm-based-relative-expression-plot" class="section level2">
+<h2>TPM-based relative expression plot</h2>
+</div>
 </div>
 
 

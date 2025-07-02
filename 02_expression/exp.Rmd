@@ -14,6 +14,40 @@ output:
     toc_depth: 3
     keep_tex: true
 ---
+# Loading
+
+## Libraries
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(gtools)
+library(ggplot2)
+```
+## Files
+
+It is advised to download this directory -  **02_expression** to your local machine to the workspace directory of your RStudio project.
+
+```{r data-loading}
+# 📁 FeatureCounts output
+tlr_counts_fc_data <- read_tsv("02_expression/tlr_counts_fc.txt")
+tlr_counts_fc_summary <- read_tsv("02_expression/tlr_counts_fc.txt.summary")
+
+# 📁 BLAST-based annotation table (gene_id ↔ TLR name)
+geneid_name <- read_csv("01_annotation/anot5.csv")
+
+# 📁 Sample info
+Pw_sample_info <- read_tsv("02_expression/Pw_sample_info.txt")
+Pw_individual_info <- read_tsv("02_expression/Pw_individual_info.txt")
+
+# ✂️ Join sample info into one table
+Pw_sample_info_2 <- Pw_sample_info %>% left_join(Pw_individual_info, by = "ID")
+Pw_sample_info_cut <- Pw_sample_info_2 %>% select(sample, part, stage_descr)
+```
 
 # Initial remarks
 

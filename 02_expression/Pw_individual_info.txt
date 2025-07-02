@@ -1,0 +1,11 @@
+genus	species	stage_Shi	stage_descr	ID	age
+Pleurodeles	waltl	39	three_fingers	25200	4.5
+Pleurodeles	waltl	39	three_fingers	25204	4.5
+Pleurodeles	waltl	43	three_toes	25215	6
+Pleurodeles	waltl	45	four_toes	25219	8
+Pleurodeles	waltl	46	five_toes	25231	10
+Pleurodeles	waltl	47	full_dev	25463	15
+Pleurodeles	waltl	48	pre_meta	25428	13
+Pleurodeles	waltl	49	mid_meta	25487	19
+Pleurodeles	waltl	50	post_meta	25488	19
+Pleurodeles	waltl	51	adult	25183	NA

@@ -21,6 +21,29 @@ library(knitr)
 library(tidyverse)
  
 ```
+# Loading
+
+## Libraries
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(stringr)
+library(gtools)
+```
+
+## Files
+
+```{r data-loading}
+# BLASTP
+tlr_1 <- read_tsv("01_annotation/wyniki2.tsv", col_names = FALSE)
+
+# anot4_1: Gene ID - Protein ID
+anot4_1 <- read_tsv("01_annotation/anot4_1.txt", col_names = c("gene_id", "prot_id"))
+```
 
 # BLAST-p program
 

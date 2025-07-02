@@ -1,4 +1,4 @@
-# TLR Expression in *Pleurodeles waltl*
+# TLR Identification and Ontogenetic/Tissue-specific Expression Analysis in *Pleurodeles waltl*
 
 This repository documents the full annotation and expression analysis of Toll-like receptor (TLR) genes in the Iberian ribbed newt (*Pleurodeles waltl*), conducted as part of a bachelor’s thesis in evolutionary immunogenomics.
 
@@ -14,12 +14,12 @@ I hypothesise elevated general TLR and particularly fish-type TLRs expression in
 
 ## 🧪 Workflow Summary
 
-The analysis was conducted in R using R Markdown and terminal tools. All scripts and steps are reproducible.
+The analysis was conducted in R using RStudio, terminal tools and external programs. The scripts and steps done in R are reproducible.
 
 ### 1. **TLR Gene Annotation**  
 See: [`anot.Rmd`](./anot.Rmd)  
 - BLAST-p search using *Lissotriton* TLR proteins  
-- Parsing top hits (E=0), linking to gene IDs from `.gtf`  
+- Parsing top hits (E=0, highest bit score), linking to gene IDs from `.gtf`  
 - Generation of a filtered annotation table
 
 ### 2. **Multiple-sequence alignment for particular TLR genes**  
@@ -35,7 +35,7 @@ See: [`exp.Rmd`](./exp.Rmd)
 - Normalization to TPM-like and FPKM values  
 - Sample classification into developmental groups
 
-### 4. **Visualization and Statistical Analysis**
+### 4. **Data Visualization**
 See: [`exp.Rmd`](./exp.Rmd)
 - TPM-based relative expression plotted per gene and stage
 - TPM-based relative expression plotted per gene, stage and tissue for fish-type TLRs
@@ -60,8 +60,8 @@ The exact versions of the used programs is available in the corresponding markdo
 
 ## 📚 Citation and resources
 
-> This project was developed by Krystian Budzik as part of a bachelor’s thesis in the Genomics and Experimental Evolution Team, Jagiellonian University.  
-> Supervisor: Prof. dr. hab. Wiesław Babik, Institute of Environmental Sciences, Faculty of Biology, JU
-> Reviewer: Dr. hab. Katarzyna Tomala, Institute of Environmental Sciences, Faculty of Biology, JU  
-> Materials used for the expression quantification (BAM files) come from the work *ref Babik*, done in the Genomic and Experimental Evolution Team, JU
-> Genomic data comes from the work *ref Pleuro genome*
+This project was developed by Krystian Budzik as part of a bachelor’s thesis in the Genomics and Experimental Evolution Team, Jagiellonian University.  
+Supervisor: Prof. dr. hab. Wiesław Babik, Institute of Environmental Sciences, Faculty of Biology, JU
+Reviewer: Dr. hab. Katarzyna Tomala, Institute of Environmental Sciences, Faculty of Biology, JU  
+Materials used for the expression quantification (BAM files) come from the work *ref Babik*, done in the Genomic and Experimental Evolution Team, JU
+Genomic data comes from the work *ref Pleuro genome*

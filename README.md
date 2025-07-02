@@ -69,8 +69,16 @@ The exact versions of the used programs is available in the corresponding markdo
 
 ## 📚 Citation and resources
 
-This project was developed by Krystian Budzik as part of a bachelor’s thesis in the Genomics and Experimental Evolution Team, Jagiellonian University.  
+This project was developed by Krystian Budzik as part of a bachelor’s thesis in the Genomics and Experimental Evolution Team, Jagiellonian University
+
 Supervisor: Prof. dr. hab. Wiesław Babik, Institute of Environmental Sciences, Faculty of Biology, JU
-Reviewer: Dr. hab. Katarzyna Tomala, Institute of Environmental Sciences, Faculty of Biology, JU  
-Materials used for the expression quantification (BAM files) come from the work *ref Babik*, done in the Genomic and Experimental Evolution Team, JU
-Genomic data comes from the work *ref Pleuro genome*
+
+Reviewer: Dr. hab. Katarzyna Tomala, Institute of Environmental Sciences, Faculty of Biology, JU
+
+Materials used for the expression quantification (BAM files) come from the work done in the Genomic and Experimental Evolution Team, JU:
+
+> https://www.ebi.ac.uk/ena/browser/view/PRJEB90989
+
+Genomic data comes from the work:
+
+> https://pubmed.ncbi.nlm.nih.gov/39874962/

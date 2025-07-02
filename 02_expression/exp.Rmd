@@ -429,4 +429,142 @@ ggplot(sample_fpkm_summary, aes(x = dev_subgroup, y = sample_sum_fpkm, color = d
 
 ## TPM-based relative expression plot
 
+```{r}
+library(ggplot2)
 
+tlr_order <- c("1", "2", "3", "5", "5L", "6", "7", "8", "9A", "9B", "13", "14", "19", "21", "22A")
+
+tlr_tpm_fpkm_dataset <- tlr_tpm_fpkm_dataset %>%
+  mutate(tlr_short = factor(tlr_short, levels = tlr_order))
+
+tlr_colors["6"] <- "#a6cee3"  # Soft blue, nice for differentiation
+
+
+tlr_tpm_fpkm_dataset$dev_subgroup <- factor(
+  tlr_tpm_fpkm_dataset$dev_subgroup,
+  levels = c("Young larva", "Older larva", "Metamorphosis", "Adult"))
+
+p2_final <- ggplot(tlr_tpm_fpkm_dataset,
+                   aes(x     = tlr_short,
+                       y     = tpm_percent,
+                       fill  = tlr_short,
+                       color = tlr_short)) +
+  
+  # boxplot, jitter
+  geom_boxplot(width = 0.6, outlier.size = 0, alpha = 0.1, size = 0.6) +
+  geom_jitter(shape = 21, size = 2, width = 0, alpha = 0.7, show.legend = FALSE) +
+  
+  # panels
+  facet_wrap(~ dev_subgroup,
+             ncol           = 1,
+             strip.position = "right",
+             drop           = FALSE) +
+
+  # scale and colours
+  scale_x_discrete(limits = levels(tlr_tpm_fpkm_dataset$tlr_short)) +
+  scale_fill_manual(values = tlr_colors) +
+  scale_color_manual(values = tlr_colors) +
+  scale_y_continuous(trans  = "sqrt",
+                     breaks = c(0, 2, 10, 20, 50),
+                     expand = expansion(mult = c(0, 0.05))) +
+
+  # descriptions
+  labs(x = "TLR gene",
+       y = "TPM (%)") +
+
+
+  theme_minimal(base_size = 14) +
+  theme(
+    # stripy po prawej stronie w stylu jak wcześniej
+    strip.placement        = "outside",
+    strip.background       = element_rect(fill = NULL, color = NA),
+    strip.text.y.right     = element_text(
+                               angle  = 270,
+                               size   = 14,
+                               face   = NULL,
+                               color  = "black",
+                               vjust  = 0.5,
+                               margin = margin(l = 10)  # odstęp od wykresu
+                             ),
+
+    # Vertical
+    panel.grid.major.y     = element_line(color = "gray90", size = 0.3),
+    panel.grid.major.x     = element_line(color = "gray90", size = 0.3),
+    panel.grid.minor       = element_blank(),
+
+    # odstępy i proporcje
+    panel.spacing.y        = unit(6, "mm"),
+    panel.spacing.x        = unit(5, "mm"),
+    
+
+    # margins
+    plot.margin            = unit(rep(4, 4), "mm"),
+
+    # axis
+    axis.text.x            = element_text(angle = 0, hjust = 0.5, size = 13),
+    axis.text.y            = element_text(size = 12),
+    axis.title.x           = element_text(size = 14, margin = margin(t = 10)),
+    axis.title.y           = element_text(size = 14, margin = margin(r = 10)),
+
+    # No legend
+    legend.position        = "none"
+  )
+
+
+```
+## fish-type TLRs TPM-based plot
+
+```{r, eval=TRUE}
+
+# Assuming you already have `tlr_tpm_fpkm_dataset` loaded
+# Filter only for the fish-specific TLRs
+
+fish_tlrs <- c("14", "19", "21", "22A")
+
+tlr_fish_data <- tlr_tpm_fpkm_dataset %>%
+  filter(tlr_short %in% fish_tlrs) %>%
+  mutate(
+    dev_subgroup = factor(dev_subgroup, levels = c("Young larva", "Older larva", "Metamorphosis", "Adult")),
+    tlr_label = factor(paste0("TLR", tlr_short), levels = paste0("TLR", fish_tlrs))
+  )
+
+
+# Plot
+p_fish <- ggplot(tlr_fish_data, aes(x = dev_subgroup, y = tpm_percent)) +
+  geom_jitter(aes(color = part), size = 2.5, width = 0.2, alpha = 0.7) +
+  stat_summary(aes(group = 1), fun = mean, geom = "line", color = "black", size = 0.7) +
+  stat_summary(aes(group = 1), fun = mean, geom = "point", shape = 21, fill = "white", color = "black", size = 3.5) +
+  scale_color_manual(values = c(
+  "lungs" = "#1b9e77",
+  "tail" = "#d95f02",
+  "spleen" = "#7570b3",
+  "intestine" = "#e7298a",
+  "liver" = "#66a61e",
+  "heart" = "#e6ab02",
+  "head" = "#a6761d",
+  "middle" = "#666666",
+  "organs" = "#1f78b4",
+  "middle_skin_spine" = "#b2182b",
+  "middle_organs" = "#542788"
+)) +
+
+  facet_wrap(~ tlr_label, ncol = 2) +
+  labs(
+    title = NULL,
+    x = NULL,
+    y = "Expression (TPM %)",
+    color = "Organ"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title.y = element_text(size = 14, margin = margin(r = 12)),
+    panel.grid.minor.y = element_blank(),
+    legend.position = "bottom",
+    legend.title = element_text(size = 13),
+    legend.text = element_text(size = 12),
+    strip.text = element_text(size = 14, face = "bold")
+  )
+
+
+```

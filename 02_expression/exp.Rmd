@@ -38,7 +38,10 @@ tlr_counts_fc_data <- read_tsv("02_expression/tlr_counts_fc.txt")
 tlr_counts_fc_summary <- read_tsv("02_expression/tlr_counts_fc.txt.summary")
 
 # 📁 BLAST-based annotation table (gene_id ↔ TLR name)
-geneid_name <- read_csv("01_annotation/anot5.csv")
+anot5_bitscore <- read_csv("03_alignment/anot5_bitscore.csv")
+
+geneid_name <- anot5_bitscore %>%
+  select(name, gene_id)
 
 # 📁 Sample info
 Pw_sample_info <- read_tsv("02_expression/Pw_sample_info.txt")

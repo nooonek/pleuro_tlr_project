@@ -169,14 +169,14 @@ tlr_counts_fc_data$gene_id <- gsub("TLR8", "138250171", tlr_counts_fc_data$gene_
 
 ### Adding the gene name column
 
-During the work, the uncertain annotation of the TLR01 gene described in the **Alignment** markdown was identified as the TLR01L. This change was applied to the annotation dataset used to join the gene name to the rest of the expression data.
+During the work, the uncertain annotation of the TLR01 gene described in the **Alignment** markdown was identified as the TLR06. This change was applied to the annotation dataset used to join the gene name to the rest of the expression data.
 
 ```{r, eval=FALSE}
 
 library(dplyr)
 
 geneid_name <- anot5 %>% select(1, 3) %>%
-  mutate(name = if_else(gene_id == "138247579", "TLR01L", name))
+  mutate(name = if_else(gene_id == "138247579", "TLR06", name))
 
 tlr_counts_fc_names <- tlr_counts_fc_data %>%
   left_join(geneid_name, by = "gene_id")
